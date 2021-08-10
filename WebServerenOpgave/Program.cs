@@ -15,7 +15,7 @@ namespace WebServerenOpgave
             IPAddress address = IPAddress.Parse(GetLocalIPAddress());
             int port = 1337;
             int maxConnections = 5;
-            string contentPath = Environment.CurrentDirectory + "\\index.txt";
+            string contentPath = Environment.CurrentDirectory;
             
             ///Creates a new WebServer
             WebServer webServer = new WebServer();

@@ -55,7 +55,7 @@ namespace WebServerenOpgave
                 this.contentPath = contentPath;
             }
             catch (Exception ex)
-            { 
+            {
                 Console.WriteLine(ex.Message);
                 return false;
             }
@@ -75,22 +75,14 @@ namespace WebServerenOpgave
                         {
                             clientSocket.ReceiveTimeout = timeout;
                             clientSocket.SendTimeout = timeout;
-                            try 
+                            try
                             {
                                 HandleTheRequest(clientSocket);
                             }
-                            catch( Exception e)
+                            catch (Exception e)
                             {
+                                clientSocket.Close();
                                 Console.WriteLine(e.Message);
-
-                                try 
-                                { 
-                                    clientSocket.Close(); 
-                                }
-                                catch (Exception ex)
-                                { 
-                                    Console.WriteLine(ex.Message); 
-                                }
                             }
                         });
 
@@ -98,7 +90,7 @@ namespace WebServerenOpgave
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message); 
+                        Console.WriteLine(ex.Message);
                     }
                 }
             });
@@ -121,8 +113,8 @@ namespace WebServerenOpgave
                     serverSocket.Close();
                 }
                 catch (Exception ex)
-                { 
-                    Console.WriteLine(ex.Message); 
+                {
+                    Console.WriteLine(ex.Message);
                 }
                 serverSocket = null;
             }
@@ -139,9 +131,18 @@ namespace WebServerenOpgave
             byte[] buffer = new byte[10240];
             int recievedBCount = clientSocket.Receive(buffer);
             string stringReceived = charEncoder.GetString(buffer, 0, recievedBCount);
+            string httpMethod = string.Empty;
 
-            //Takes index 0 and reads it as an httpMethod
-            string httpMethod = stringReceived.Substring(0, stringReceived.IndexOf(" "));
+            try
+            {
+                //Takes index 0 and reads it as an httpMethod
+                httpMethod = stringReceived.Substring(0, stringReceived.IndexOf(" "));
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
             int start = stringReceived.IndexOf(httpMethod) + httpMethod.Length + 1;
             int length = stringReceived.LastIndexOf("HTTP") - start - 1;
@@ -151,7 +152,9 @@ namespace WebServerenOpgave
 
             //Checks if the request includes a GET or POST method call
             if (httpMethod.Equals("GET") || httpMethod.Equals("POST"))
+            {
                 requestedFile = requestedUrl.Split('?')[0];
+            }
             else
             {
                 NotImplemented(clientSocket);
@@ -166,13 +169,13 @@ namespace WebServerenOpgave
             {
                 length = requestedFile.Length - start;
                 string extension = requestedFile.Substring(start, length);
+
                 if (extensions.ContainsKey(extension))
                 {
                     //Checks if there is any content to send back in the body of the response
                     if (File.Exists(contentPath + requestedFile))
                     {
-                        SendOkResponse(clientSocket,
-                            File.ReadAllBytes(contentPath + requestedFile), extensions[extension]);
+                        SendOkResponse(clientSocket, File.ReadAllBytes(contentPath + requestedFile), extensions[extension]);
                     }
                     else
                     {
@@ -187,15 +190,14 @@ namespace WebServerenOpgave
                     requestedFile += @"\";
                 }
 
-                if (File.Exists(contentPath + requestedFile + "index.html"))
+                if (File.Exists(contentPath + requestedFile + "index.txt"))
                 {
-                    SendOkResponse(clientSocket,
-                      File.ReadAllBytes(contentPath + requestedFile + "\\index.html"), "text/html");
+                    SendOkResponse(clientSocket, File.ReadAllBytes(contentPath + requestedFile + "\\index.txt"), "text/html");
                 }
-                else if (File.Exists(contentPath + requestedFile + "index.html"))
+                else if (File.Exists(contentPath + requestedFile))
                 {
                     SendOkResponse(clientSocket,
-                        File.ReadAllBytes(contentPath + requestedFile + "\\index.html"), "text/html");
+                        File.ReadAllBytes(contentPath + requestedFile), "text/html");
                 }
                 else
                 {
